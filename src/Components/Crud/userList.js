@@ -1,6 +1,6 @@
+import { useEffect } from "react";
 import {
   Box,
-  Button,
   Divider,
   Heading,
   IconButton,
@@ -14,45 +14,38 @@ import {
 } from "@chakra-ui/react";
 import { MdEdit, MdDeleteOutline } from "react-icons/md";
 import { apiUrl } from "../../config";
-import { useEffect, useState } from "react";
 import axios from "axios";
 
-function UserList() {
-  const [userData, setUserData] = useState([]);
-  console.log("userData", userData);
+function UserList({ userData, getUsers, handleUpdateUser, setSelectedUser }) {
   const token = localStorage.getItem("Authentication");
 
-  const getUsers = async () => {
+  useEffect(() => {
+    getUsers();
+  }, []);
+  const handleDeleteUser = async (_id) => {
     try {
-      const response = await axios.get(`${apiUrl}contacts/getAllContacts`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("response====", response);
-      if (response.status === 200) {
-        //   setUserData(response.data);
-        console.log("Users retrieved successfully", response.data);
-      } else {
-        console.log("Error during get users:");
-      }
+      const response = await axios.delete(
+        `${apiUrl}contacts/deleteContact/${_id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        }
+      );
+      console.log("User deleted successfully", response);
+      getUsers();
     } catch (error) {
       console.error("Error during get user:", error);
     }
   };
-
-  //   useEffect(() => {
-  //     getUsers();
-  //   }, []);
 
   const userHeader = ["User Name", "User Email", "User Mobile", "Actions"];
 
   return (
     <Box>
       <Heading textAlign={"center"}>UserList</Heading>
-
-      <Button onClick={getUsers}>get user</Button>
       <Divider />
       <Box mt={2}>
         <TableContainer
@@ -68,29 +61,38 @@ function UserList() {
               </Tr>
             </Thead>
             <Tbody>
-              <Tr>
-                <Td>Gopal</Td>
-                <Td>gopal123@gmail.com</Td>
-                <Td>9999999</Td>
-                <Td sx={{ display: "flex", gap: "5px" }}>
-                  <IconButton
-                    variant="solid"
-                    colorScheme="red"
-                    aria-label="Delete"
-                    fontSize="20"
-                    icon={<MdDeleteOutline />}
-                    //   onClick={() => handleDeleteItem(item.id)}
-                  />
-                  <IconButton
-                    variant="solid"
-                    colorScheme="teal"
-                    aria-label="Edit"
-                    fontSize="20px"
-                    icon={<MdEdit />}
-                    //   onClick={() => handleItemChange(item.id)}
-                  />
-                </Td>
-              </Tr>
+              {userData.map((val) => (
+                <Tr key={val._id}>
+                  <Td>{val.name}</Td>
+                  <Td>{val.email}</Td>
+                  <Td>{val.phone}</Td>
+                  <Td sx={{ display: "flex", gap: "5px" }}>
+                    <IconButton
+                      variant="solid"
+                      colorScheme="red"
+                      aria-label="Delete"
+                      fontSize="20"
+                      icon={<MdDeleteOutline />}
+                      onClick={() => handleDeleteUser(val._id)}
+                    />
+                    <IconButton
+                      variant="solid"
+                      colorScheme="teal"
+                      aria-label="Edit"
+                      fontSize="20px"
+                      icon={<MdEdit />}
+                      onClick={() =>
+                        setSelectedUser({
+                          id: val._id,
+                          name: val.name,
+                          email: val.email,
+                          phone: val.phone,
+                        })
+                      }
+                    />
+                  </Td>
+                </Tr>
+              ))}
             </Tbody>
           </Table>
         </TableContainer>

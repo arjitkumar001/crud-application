@@ -6,35 +6,80 @@ import {
   FormLabel,
   Heading,
   Input,
+  Stack,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiUrl } from "../../config";
 const token = localStorage.getItem("Authentication");
 
-function UserForm() {
+function UserForm({ getUsers, selectedUser, setSelectedUser }) {
   const [userDetail, setUserDetail] = useState({
     name: "",
     email: "",
     phone: "",
   });
+  useEffect(() => {
+    if (selectedUser) {
+      setUserDetail({
+        name: selectedUser.name,
+        email: selectedUser.email,
+        phone: selectedUser.phone,
+      });
+    } else {
+      // Reset form fields if no user is selected
+      setUserDetail({
+        name: "",
+        email: "",
+        phone: "",
+      });
+    }
+  }, [selectedUser]);
   const addUserUrl = async () => {
     try {
-      const response = await fetch(`${apiUrl}contacts/createContact`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(userDetail),
+      if (selectedUser) {
+        const response = await fetch(
+          `${apiUrl}contacts/updateContact/${selectedUser.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(userDetail),
+          }
+        );
+        console.log("User updated successfully", response);
+      } else {
+        // If no selectedUser, it means we are creating a new user
+        const response = await fetch(`${apiUrl}contacts/createContact`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(userDetail),
+        });
+        console.log("User created successfully", response);
+      }
+
+      getUsers();
+      setSelectedUser(null);
+      setUserDetail({
+        name: "",
+        email: "",
+        phone: "",
       });
-      console.log("user create successfully", response);
     } catch (error) {
-      console.log("Error during add user:", error);
+      console.log("Error during add/update user:", error);
     }
   };
+
   const addUser = (event) => {
     event.preventDefault();
     addUserUrl();
+  };
+  const cancelEditUser = () => {
+    setSelectedUser(null);
     setUserDetail({
       name: "",
       email: "",
@@ -47,7 +92,7 @@ function UserForm() {
         <Heading textAlign={"center"} mb={5}>
           Add Users
         </Heading>
-        <Divider/>
+        <Divider />
         <Box>
           <form onSubmit={addUser}>
             <FormControl>
@@ -83,15 +128,28 @@ function UserForm() {
                 }
               />
             </FormControl>
-            <Button
-              onClick={addUser}
-              w="full"
-              mt={4}
-              variant="solid"
-              colorScheme="red"
-            >
-              Add User
-            </Button>
+            <Stack spacing={4} direction="row" align="center">
+              <Button
+                onClick={addUser}
+                w="full"
+                mt={4}
+                variant="solid"
+                colorScheme="red"
+              >
+                {selectedUser ? "Update User" : "Add User"}
+              </Button>
+              {selectedUser && (
+                <Button
+                  onClick={cancelEditUser}
+                  w="full"
+                  mt={4}
+                  variant="outline"
+                  colorScheme="yellow"
+                >
+                  Cancel
+                </Button>
+              )}
+            </Stack>
           </form>
         </Box>
       </Box>

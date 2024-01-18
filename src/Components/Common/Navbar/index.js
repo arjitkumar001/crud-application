@@ -26,7 +26,7 @@ function NavBar() {
         }}
       >
         <Grid templateColumns="repeat(2, 1fr)">
-          <GridItem colSpan={2} px={4}>
+          <GridItem colSpan={2} px={4} sx={{display:'flex',}}>
             <List color="#fff">
               <Link to="/home">Home</Link>
             </List>
